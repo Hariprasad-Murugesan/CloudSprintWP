@@ -1,0 +1,30 @@
+---
+- name: Ensure WordPress directory exists
+  file:
+    path: /var/www/html
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+
+- name: Copy WordPress configuration template
+  template:
+    src: wp-config.php.j2
+    dest: /var/www/html/wp-config.php
+    owner: www-data
+    group: www-data
+    mode: '0644'
+  notify: restart apache
+
+- name: Set proper file permissions
+  file:
+    path: /var/www/html
+    owner: www-data
+    group: www-data
+    recurse: yes
+
+- name: Ensure Apache is running
+  service:
+    name: apache2
+    state: started
+    enabled: yes

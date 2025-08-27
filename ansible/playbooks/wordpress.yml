@@ -1,0 +1,36 @@
+---
+- name: Configure WordPress on ECS
+  hosts: local
+  connection: local
+  gather_facts: no
+  become: no
+  tasks:
+    - name: Get ECS task IP addresses
+      shell: |
+        aws ecs describe-tasks \
+          --cluster wordpress-cluster-dev \
+          --tasks $(aws ecs list-tasks --cluster wordpress-cluster-dev --region eu-north-1 --query 'taskArns' --output text) \
+          --region eu-north-1 \
+          --query 'tasks[].attachments[].details[?name==`privateIPv4Address`].value' \
+          --output text
+      register: ecs_task_ips
+
+    - name: Debug task IPs
+      debug:
+        var: ecs_task_ips.stdout
+
+    - name: Create dynamic inventory for ECS tasks
+      add_host:
+        name: "{{ item }}"
+        groups: wordpress_servers
+        ansible_ssh_private_key_file: "~/.ssh/wordpress-key.pem"
+        ansible_user: ec2-user
+      loop: "{{ ecs_task_ips.stdout.split() }}"
+
+- name: Configure WordPress servers
+  hosts: wordpress_servers
+  become: yes
+  roles:
+    - wordpress
+  vars_files:
+    - ../group_vars/wordpress_servers.yml

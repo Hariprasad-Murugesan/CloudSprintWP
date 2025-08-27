@@ -1,0 +1,51 @@
+---
+- name: Generate Infrastructure Report
+  hosts: local
+  connection: local
+  gather_facts: no
+  
+  tasks:
+    - name: Get all Terraform outputs
+      command: terraform output -json
+      register: tf_outputs
+      changed_when: false
+
+    - name: Create infrastructure report
+      debug:
+        msg: |
+          🌐 WORDPRESS INFRASTRUCTURE REPORT 🌐
+          ====================================
+          Website URL: http://{{ tf_outputs.alb_dns_name.value }}
+          ECS Cluster: {{ tf_outputs.ecs_cluster_name.value }}
+          RDS Endpoint: {{ tf_outputs.rds_endpoint.value }}
+          
+          📊 RESOURCE STATUS:
+          ECS Tasks: $(aws ecs list-tasks --cluster wordpress-cluster-dev --region eu-north-1 --query 'length(taskArns)' --output text) running
+          RDS Status: $(aws rds describe-db-instances --db-instance-identifier wordpress-db-dev --region eu-north-1 --query 'DBInstances[0].DBInstanceStatus' --output text)
+          ALB DNS: {{ tf_outputs.alb_dns_name.value }}
+
+    - name: Check CloudWatch logs for errors
+      shell: |
+        aws logs filter-log-events \
+          --log-group-name /ecs/wordpress-dev \
+          --region eu-north-1 \
+          --filter-pattern "ERROR" \
+          --limit 5 \
+          --query 'events[].message' \
+          --output text
+      register: cw_errors
+      ignore_errors: yes
+
+    - name: Display recent errors
+      debug:
+        msg: "Recent CloudWatch Errors: {{ cw_errors.stdout if cw_errors.stdout != '' else 'No errors found' }}"
+
+    - name: Get cost estimate
+      shell: |
+        infracost breakdown --path ../terraform --format json | jq '.totalMonthlyCost' || echo "Infracost not installed"
+      register: monthly_cost
+      changed_when: false
+
+    - name: Display monthly cost estimate
+      debug:
+        msg: "Estimated Monthly Cost: ${{ monthly_cost.stdout }}"

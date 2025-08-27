@@ -1,0 +1,715 @@
+{
+  "version": 4,
+  "terraform_version": "1.13.0",
+  "serial": 9,
+  "lineage": "1648a7f9-e6a4-4377-220e-c63ee431a316",
+  "outputs": {
+    "ecs_cluster_name": {
+      "value": "wordpress-cluster-dev",
+      "type": "string"
+    },
+    "ecs_service_name": {
+      "value": "wordpress-service-dev",
+      "type": "string"
+    },
+    "wordpress_url": {
+      "value": "http://wordpress-service-dev.elb.amazonaws.com",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "data",
+      "type": "aws_ami",
+      "name": "amazon_linux",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "allow_unsafe_filter": null,
+            "architecture": "x86_64",
+            "arn": "arn:aws:ec2:eu-north-1::image/ami-0009f0c4964e4e0f9",
+            "block_device_mappings": [
+              {
+                "device_name": "/dev/xvda",
+                "ebs": {
+                  "delete_on_termination": "true",
+                  "encrypted": "false",
+                  "iops": "0",
+                  "snapshot_id": "snap-0bc54e2c53c7f6b36",
+                  "throughput": "0",
+                  "volume_initialization_rate": "0",
+                  "volume_size": "8",
+                  "volume_type": "gp2"
+                },
+                "no_device": "",
+                "virtual_name": ""
+              }
+            ],
+            "boot_mode": "",
+            "creation_date": "2025-08-16T04:54:04.000Z",
+            "deprecation_time": "2025-11-14T04:54:00.000Z",
+            "description": "Amazon Linux 2 AMI 2.0.20250818.2 x86_64 HVM gp2",
+            "ena_support": true,
+            "executable_users": null,
+            "filter": [
+              {
+                "name": "name",
+                "values": [
+                  "amzn2-ami-hvm-*-x86_64-gp2"
+                ]
+              }
+            ],
+            "hypervisor": "xen",
+            "id": "ami-0009f0c4964e4e0f9",
+            "image_id": "ami-0009f0c4964e4e0f9",
+            "image_location": "amazon/amzn2-ami-hvm-2.0.20250818.2-x86_64-gp2",
+            "image_owner_alias": "amazon",
+            "image_type": "machine",
+            "imds_support": "",
+            "include_deprecated": false,
+            "kernel_id": "",
+            "last_launched_time": "",
+            "most_recent": true,
+            "name": "amzn2-ami-hvm-2.0.20250818.2-x86_64-gp2",
+            "name_regex": null,
+            "owner_id": "137112412989",
+            "owners": [
+              "amazon"
+            ],
+            "platform": "",
+            "platform_details": "Linux/UNIX",
+            "product_codes": [],
+            "public": true,
+            "ramdisk_id": "",
+            "region": "eu-north-1",
+            "root_device_name": "/dev/xvda",
+            "root_device_type": "ebs",
+            "root_snapshot_id": "snap-0bc54e2c53c7f6b36",
+            "sriov_net_support": "simple",
+            "state": "available",
+            "state_reason": {
+              "code": "UNSET",
+              "message": "UNSET"
+            },
+            "tags": {},
+            "timeouts": null,
+            "tpm_support": "",
+            "uefi_data": null,
+            "usage_operation": "RunInstances",
+            "virtualization_type": "hvm"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_cloudwatch_log_group",
+      "name": "wordpress",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:logs:eu-north-1:625041985992:log-group:/ecs/wordpress-dev",
+            "id": "/ecs/wordpress-dev",
+            "kms_key_id": "",
+            "log_group_class": "STANDARD",
+            "name": "/ecs/wordpress-dev",
+            "name_prefix": "",
+            "region": "eu-north-1",
+            "retention_in_days": 30,
+            "skip_destroy": false,
+            "tags": {
+              "Environment": "dev"
+            },
+            "tags_all": {
+              "Environment": "dev"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "625041985992",
+            "name": "/ecs/wordpress-dev",
+            "region": "eu-north-1"
+          },
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_ecs_cluster",
+      "name": "wordpress_cluster",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ecs:eu-north-1:625041985992:cluster/wordpress-cluster-dev",
+            "configuration": [],
+            "id": "arn:aws:ecs:eu-north-1:625041985992:cluster/wordpress-cluster-dev",
+            "name": "wordpress-cluster-dev",
+            "region": "eu-north-1",
+            "service_connect_defaults": [],
+            "setting": [
+              {
+                "name": "containerInsights",
+                "value": "enabled"
+              }
+            ],
+            "tags": {
+              "Environment": "dev",
+              "Name": "wordpress-ecs-cluster"
+            },
+            "tags_all": {
+              "Environment": "dev",
+              "Name": "wordpress-ecs-cluster"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role",
+      "name": "ecs_execution_role",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:iam::625041985992:role/ecs-execution-role-dev",
+            "assume_role_policy": "{\"Statement\":[{\"Action\":\"sts:AssumeRole\",\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"}}],\"Version\":\"2012-10-17\"}",
+            "create_date": "2025-08-27T11:04:10Z",
+            "description": "",
+            "force_detach_policies": false,
+            "id": "ecs-execution-role-dev",
+            "inline_policy": [],
+            "managed_policy_arns": [],
+            "max_session_duration": 3600,
+            "name": "ecs-execution-role-dev",
+            "name_prefix": "",
+            "path": "/",
+            "permissions_boundary": "",
+            "tags": {
+              "Environment": "dev"
+            },
+            "tags_all": {
+              "Environment": "dev"
+            },
+            "unique_id": "AROAZDB3H2HEIDZPX2BPB"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "625041985992",
+            "name": "ecs-execution-role-dev"
+          },
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role_policy",
+      "name": "ecs_cloudwatch",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "ecs-execution-role-dev:ecs-cloudwatch-policy-dev",
+            "name": "ecs-cloudwatch-policy-dev",
+            "name_prefix": "",
+            "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Action\":[\"logs:CreateLogStream\",\"logs:PutLogEvents\",\"logs:CreateLogGroup\"],\"Effect\":\"Allow\",\"Resource\":\"*\"}]}",
+            "role": "ecs-execution-role-dev"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "625041985992",
+            "name": "ecs-cloudwatch-policy-dev",
+            "role": "ecs-execution-role-dev"
+          },
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.ecs_execution_role"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_iam_role_policy_attachment",
+      "name": "ecs_execution",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "id": "ecs-execution-role-dev/arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+            "policy_arn": "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+            "role": "ecs-execution-role-dev"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "625041985992",
+            "policy_arn": "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy",
+            "role": "ecs-execution-role-dev"
+          },
+          "private": "bnVsbA==",
+          "dependencies": [
+            "aws_iam_role.ecs_execution_role"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_internet_gateway",
+      "name": "igw",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ec2:eu-north-1:625041985992:internet-gateway/igw-0dd189270cc124dd7",
+            "id": "igw-0dd189270cc124dd7",
+            "owner_id": "625041985992",
+            "region": "eu-north-1",
+            "tags": {
+              "Environment": "dev",
+              "Name": "wordpress-igw-dev"
+            },
+            "tags_all": {
+              "Environment": "dev",
+              "Name": "wordpress-igw-dev"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0eeab52153fbb835c"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjoxMjAwMDAwMDAwMDAwLCJkZWxldGUiOjEyMDAwMDAwMDAwMDAsInVwZGF0ZSI6MTIwMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route_table",
+      "name": "public",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ec2:eu-north-1:625041985992:route-table/rtb-0e8662aa786804abd",
+            "id": "rtb-0e8662aa786804abd",
+            "owner_id": "625041985992",
+            "propagating_vgws": [],
+            "region": "eu-north-1",
+            "route": [
+              {
+                "carrier_gateway_id": "",
+                "cidr_block": "0.0.0.0/0",
+                "core_network_arn": "",
+                "destination_prefix_list_id": "",
+                "egress_only_gateway_id": "",
+                "gateway_id": "igw-0dd189270cc124dd7",
+                "ipv6_cidr_block": "",
+                "local_gateway_id": "",
+                "nat_gateway_id": "",
+                "network_interface_id": "",
+                "transit_gateway_id": "",
+                "vpc_endpoint_id": "",
+                "vpc_peering_connection_id": ""
+              }
+            ],
+            "tags": {
+              "Environment": "dev",
+              "Name": "public-rt-dev"
+            },
+            "tags_all": {
+              "Environment": "dev",
+              "Name": "public-rt-dev"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0eeab52153fbb835c"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAsImRlbGV0ZSI6MzAwMDAwMDAwMDAwLCJ1cGRhdGUiOjEyMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_internet_gateway.igw",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_route_table_association",
+      "name": "public",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "gateway_id": "",
+            "id": "rtbassoc-08434b5e3fe9a387f",
+            "region": "eu-north-1",
+            "route_table_id": "rtb-0e8662aa786804abd",
+            "subnet_id": "subnet-0b24b2425484943d6",
+            "timeouts": null
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjozMDAwMDAwMDAwMDAsImRlbGV0ZSI6MzAwMDAwMDAwMDAwLCJ1cGRhdGUiOjEyMDAwMDAwMDAwMH19",
+          "dependencies": [
+            "aws_internet_gateway.igw",
+            "aws_route_table.public",
+            "aws_subnet.public",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "db_sg",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "status": "tainted",
+          "schema_version": 1,
+          "attributes": {
+            "arn": null,
+            "description": "Security group for database",
+            "egress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": false,
+                "to_port": 0
+              }
+            ],
+            "id": "sg-03759dd5461b65a42",
+            "ingress": [
+              {
+                "cidr_blocks": [],
+                "description": "",
+                "from_port": 3306,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [
+                  "sg-0a86143bb1673e935"
+                ],
+                "self": false,
+                "to_port": 3306
+              }
+            ],
+            "name": "wordpress-db-sg-dev",
+            "name_prefix": null,
+            "owner_id": null,
+            "region": "eu-north-1",
+            "revoke_rules_on_delete": false,
+            "tags": {
+              "Environment": "dev"
+            },
+            "tags_all": {
+              "Environment": "dev"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0eeab52153fbb835c"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": null,
+            "id": null,
+            "region": null
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "dependencies": [
+            "aws_security_group.ecs_sg",
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "ecs_sg",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:eu-north-1:625041985992:security-group/sg-0a86143bb1673e935",
+            "description": "Security group for ECS tasks",
+            "egress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "Outbound traffic",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": false,
+                "to_port": 0
+              }
+            ],
+            "id": "sg-0a86143bb1673e935",
+            "ingress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "HTTP access",
+                "from_port": 80,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 80
+              }
+            ],
+            "name": "wordpress-ecs-sg-dev",
+            "name_prefix": "",
+            "owner_id": "625041985992",
+            "region": "eu-north-1",
+            "revoke_rules_on_delete": false,
+            "tags": {
+              "Environment": "dev",
+              "Name": "wordpress-ecs-security-group"
+            },
+            "tags_all": {
+              "Environment": "dev",
+              "Name": "wordpress-ecs-security-group"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0cb96cadc11e4eab4"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "625041985992",
+            "id": "sg-0a86143bb1673e935",
+            "region": "eu-north-1"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_security_group",
+      "name": "wordpress_sg",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:eu-north-1:625041985992:security-group/sg-0ca9135f5d18b6afb",
+            "description": "Security group for WordPress instance",
+            "egress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "Outbound traffic",
+                "from_port": 0,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "-1",
+                "security_groups": [],
+                "self": false,
+                "to_port": 0
+              }
+            ],
+            "id": "sg-0ca9135f5d18b6afb",
+            "ingress": [
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "HTTP access",
+                "from_port": 80,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 80
+              },
+              {
+                "cidr_blocks": [
+                  "0.0.0.0/0"
+                ],
+                "description": "SSH access",
+                "from_port": 22,
+                "ipv6_cidr_blocks": [],
+                "prefix_list_ids": [],
+                "protocol": "tcp",
+                "security_groups": [],
+                "self": false,
+                "to_port": 22
+              }
+            ],
+            "name": "wordpress-sg-dev",
+            "name_prefix": "",
+            "owner_id": "625041985992",
+            "region": "eu-north-1",
+            "revoke_rules_on_delete": false,
+            "tags": {
+              "Environment": "dev",
+              "Name": "wordpress-security-group"
+            },
+            "tags_all": {
+              "Environment": "dev",
+              "Name": "wordpress-security-group"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0cb96cadc11e4eab4"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "625041985992",
+            "id": "sg-0ca9135f5d18b6afb",
+            "region": "eu-north-1"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_subnet",
+      "name": "public",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:eu-north-1:625041985992:subnet/subnet-0b24b2425484943d6",
+            "assign_ipv6_address_on_creation": false,
+            "availability_zone": "eu-north-1a",
+            "availability_zone_id": "eun1-az1",
+            "cidr_block": "10.0.1.0/24",
+            "customer_owned_ipv4_pool": "",
+            "enable_dns64": false,
+            "enable_lni_at_device_index": 0,
+            "enable_resource_name_dns_a_record_on_launch": false,
+            "enable_resource_name_dns_aaaa_record_on_launch": false,
+            "id": "subnet-0b24b2425484943d6",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_association_id": "",
+            "ipv6_native": false,
+            "map_customer_owned_ip_on_launch": false,
+            "map_public_ip_on_launch": true,
+            "outpost_arn": "",
+            "owner_id": "625041985992",
+            "private_dns_hostname_type_on_launch": "ip-name",
+            "region": "eu-north-1",
+            "tags": {
+              "Environment": "dev",
+              "Name": "public-subnet-dev"
+            },
+            "tags_all": {
+              "Environment": "dev",
+              "Name": "public-subnet-dev"
+            },
+            "timeouts": null,
+            "vpc_id": "vpc-0eeab52153fbb835c"
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "identity": {
+            "account_id": "625041985992",
+            "id": "subnet-0b24b2425484943d6",
+            "region": "eu-north-1"
+          },
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
+          "dependencies": [
+            "aws_vpc.main"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "aws_vpc",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "arn": "arn:aws:ec2:eu-north-1:625041985992:vpc/vpc-0eeab52153fbb835c",
+            "assign_generated_ipv6_cidr_block": false,
+            "cidr_block": "10.0.0.0/16",
+            "default_network_acl_id": "acl-0b2381abfadbe07c9",
+            "default_route_table_id": "rtb-00654f9fceaf0d3ae",
+            "default_security_group_id": "sg-05327fbd051a17fbc",
+            "dhcp_options_id": "dopt-05dfeba4802fad042",
+            "enable_dns_hostnames": true,
+            "enable_dns_support": true,
+            "enable_network_address_usage_metrics": false,
+            "id": "vpc-0eeab52153fbb835c",
+            "instance_tenancy": "default",
+            "ipv4_ipam_pool_id": null,
+            "ipv4_netmask_length": null,
+            "ipv6_association_id": "",
+            "ipv6_cidr_block": "",
+            "ipv6_cidr_block_network_border_group": "",
+            "ipv6_ipam_pool_id": "",
+            "ipv6_netmask_length": 0,
+            "main_route_table_id": "rtb-00654f9fceaf0d3ae",
+            "owner_id": "625041985992",
+            "region": "eu-north-1",
+            "tags": {
+              "Environment": "dev",
+              "Name": "wordpress-vpc-dev"
+            },
+            "tags_all": {
+              "Environment": "dev",
+              "Name": "wordpress-vpc-dev"
+            }
+          },
+          "sensitive_attributes": [],
+          "identity_schema_version": 0,
+          "private": "eyJzY2hlbWFfdmVyc2lvbiI6IjEifQ=="
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}
+

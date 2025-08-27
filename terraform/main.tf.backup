@@ -59,43 +59,6 @@ resource "aws_ecs_task_definition" "wordpress" {
       {
         name  = "WORDPRESS_DB_PASSWORD"
         value = var.db_password
-      },
-      # Add WordPress security keys
-      {
-        name  = "WORDPRESS_AUTH_KEY"
-        value = var.wp_auth_key
-      },
-      {
-        name  = "WORDPRESS_SECURE_AUTH_KEY"
-        value = var.wp_secure_auth_key
-      },
-      {
-        name  = "WORDPRESS_LOGGED_IN_KEY"
-        value = var.wp_logged_in_key
-      },
-      {
-        name  = "WORDPRESS_NONCE_KEY"
-        value = var.wp_nonce_key
-      },
-      {
-        name  = "WORDPRESS_AUTH_SALT"
-        value = var.wp_auth_salt
-      },
-      {
-        name  = "WORDPRESS_SECURE_AUTH_SALT"
-        value = var.wp_secure_auth_salt
-      },
-      {
-        name  = "WORDPRESS_LOGGED_IN_SALT"
-        value = var.wp_logged_in_salt
-      },
-      {
-        name  = "WORDPRESS_NONCE_SALT"
-        value = var.wp_nonce_salt
-      },
-      {
-        name  = "WORDPRESS_CONFIG_EXTRA"
-        value = "define('WP_DEBUG', false);"
       }
     ]
 
@@ -113,26 +76,24 @@ resource "aws_ecs_task_definition" "wordpress" {
     Environment = var.environment
   }
 }
+
 # ECS Service 
 resource "aws_ecs_service" "wordpress" {
-  name            = "wordpress-service-dev"
+  name            = "wordpress-service-${var.environment}"
   cluster         = aws_ecs_cluster.wordpress_cluster.id
   task_definition = aws_ecs_task_definition.wordpress.arn
   desired_count   = 1
   launch_type     = "FARGATE"
 
   network_configuration {
-    assign_public_ip = true
+    subnets          = aws_subnet.private[*].id  # Use private subnets
     security_groups  = [aws_security_group.ecs_sg.id]
-    subnets          = aws_subnet.public[*].id
+    assign_public_ip = false  # No public IP in private subnets
   }
 
-  # THIS IS THE CRITICAL PART - LOAD BALANCER CONFIG
-  load_balancer {
-    target_group_arn = aws_lb_target_group.wordpress.arn
-    container_name   = "wordpress"
-    container_port   = 80
+  tags = {
+    Environment = var.environment
   }
 
-  depends_on = [aws_lb_listener.wordpress]
+  depends_on = [aws_iam_role_policy_attachment.ecs_execution]
 }

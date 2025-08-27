@@ -1,0 +1,6 @@
+[wordpress_servers]
+# We'll dynamically get ECS task IPs later
+# For now, we'll use localhost for configuration templates
+
+[local]
+localhost ansible_connection=local

@@ -1,14 +1,21 @@
-output "wordpress_url" {
-  description = "URL to access WordPress"
-  value       = "http://${aws_instance.wordpress.public_ip}"
+output "alb_dns_name" {
+  value = aws_lb.wordpress.dns_name
 }
 
-output "public_ip" {
-  description = "Public IP address of WordPress instance"
-  value       = aws_instance.wordpress.public_ip
+output "rds_endpoint" {
+  value = aws_db_instance.wordpress_db.endpoint
 }
 
-output "ssh_command" {
-  description = "SSH command to connect to instance"
-  value       = "ssh -i your-key.pem ec2-user@${aws_instance.wordpress.public_ip}"
+output "ecs_cluster_name" {
+  value = aws_ecs_cluster.wordpress_cluster.name
+}
+
+output "ecs_service_status" {
+  description = "ECS service status information"
+  value = {
+    service_name    = aws_ecs_service.wordpress.name
+    cluster_name    = aws_ecs_service.wordpress.cluster
+    desired_count   = aws_ecs_service.wordpress.desired_count
+    task_definition = aws_ecs_service.wordpress.task_definition
+  }
 }

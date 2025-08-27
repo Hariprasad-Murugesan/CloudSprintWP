@@ -1,0 +1,38 @@
+---
+- name: Test Database Connectivity
+  hosts: local
+  connection: local
+  gather_facts: no
+  
+  tasks:
+    - name: Get RDS endpoint from Terraform output
+      command: terraform output -raw rds_endpoint
+      register: rds_endpoint
+      changed_when: false
+
+    - name: Extract database host and port
+      set_fact:
+        db_host: "{{ rds_endpoint.stdout.split(':')[0] }}"
+        db_port: "{{ rds_endpoint.stdout.split(':')[1] }}"
+
+    - name: Test database connectivity with telnet
+      community.general.nettest:
+        host: "{{ db_host }}"
+        port: "{{ db_port }}"
+        timeout: 10
+      register: db_connectivity
+
+    - name: Display database connectivity result
+      debug:
+        msg: "Database connectivity to {{ db_host }}:{{ db_port }}: {{ 'SUCCESS' if db_connectivity.elapsed != 0 else 'FAILED' }}"
+
+    - name: Test MySQL connection (if mysql client is available)
+      shell: |
+        mysql -h {{ db_host }} -P {{ db_port }} -u {{ db_user }} -p{{ db_password }} -e "SELECT 1" 2>/dev/null || echo "MySQL client not available"
+      register: mysql_test
+      environment:
+        MYSQL_PWD: "{{ db_password }}"
+
+    - name: Display MySQL test result
+      debug:
+        msg: "MySQL connection test: {{ mysql_test.stdout }}"
