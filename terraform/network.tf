@@ -4,48 +4,65 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags = {
-    Name        = "wordpress-vpc-${var.environment}"
-    Environment = var.environment
-  }
+  tags = merge(var.tags, {
+    Name = "wordpress-vpc"
+  })
 }
 
 # Public Subnets
 resource "aws_subnet" "public" {
-  count             = length(var.public_subnet_cidr_blocks)
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.public_subnet_cidr_blocks[count.index]
-  availability_zone = var.availability_zones[count.index]
+  count                   = length(var.public_subnet_cidr_blocks)
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_cidr_blocks[count.index]
+  availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
 
-  tags = {
-    Name        = "public-subnet-${count.index}-${var.environment}"
-    Environment = var.environment
-  }
+  tags = merge(var.tags, {
+    Name = "public-subnet-${count.index}"
+  })
 }
 
 # Private Subnets
 resource "aws_subnet" "private" {
-  count             = length(var.private_subnet_cidr_blocks)
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = var.private_subnet_cidr_blocks[count.index]
-  availability_zone = var.availability_zones[count.index]
+  count                   = length(var.private_subnet_cidr_blocks)
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.private_subnet_cidr_blocks[count.index]
+  availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = false
 
-  tags = {
-    Name        = "private-subnet-${count.index}-${var.environment}"
-    Environment = var.environment
-  }
+  tags = merge(var.tags, {
+    Name = "private-subnet-${count.index}"
+  })
 }
 
 # Internet Gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
-  tags = {
-    Name        = "wordpress-igw-${var.environment}"
-    Environment = var.environment
-  }
+  tags = merge(var.tags, {
+    Name = "wordpress-igw"
+  })
+}
+
+# NAT Gateway EIP
+resource "aws_eip" "nat" {
+  domain = "vpc"
+
+  tags = merge(var.tags, {
+    Name = "wordpress-nat-eip"
+  })
+}
+
+# NAT Gateway
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public[0].id
+
+  tags = merge(var.tags, {
+    Name = "wordpress-nat"
+  })
+
+  depends_on = [aws_internet_gateway.main]
 }
 
 # Route Table for Public Subnets
@@ -57,40 +74,12 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.main.id
   }
 
-  tags = {
-    Name        = "public-route-table-${var.environment}"
-    Environment = var.environment
-  }
+  tags = merge(var.tags, {
+    Name = "public-route-table"
+  })
 }
 
-# Route Table Association for Public Subnets
-resource "aws_route_table_association" "public" {
-  count          = length(var.public_subnet_cidr_blocks)
-  subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.public.id
-}
-
-# Add to your network.tf
-resource "aws_nat_gateway" "nat" {
-  allocation_id = aws_eip.nat.id
-  subnet_id     = aws_subnet.public[0].id
-
-  tags = {
-    Name        = "wordpress-nat-dev"
-    Environment = "dev"
-  }
-}
-
-resource "aws_eip" "nat" {
-  domain = "vpc"
-
-  tags = {
-    Name        = "wordpress-nat-eip-dev"
-    Environment = "dev"
-  }
-}
-
-# Add private route table with NAT gateway route
+# Route Table for Private Subnets
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
 
@@ -99,16 +88,20 @@ resource "aws_route_table" "private" {
     nat_gateway_id = aws_nat_gateway.nat.id
   }
 
-  tags = {
-    Name        = "private-route-table-dev"
-    Environment = "dev"
-  }
+  tags = merge(var.tags, {
+    Name = "private-route-table"
+  })
 }
 
-# Associate private subnets with private route table
+# Route Table Associations
+resource "aws_route_table_association" "public" {
+  count          = length(var.public_subnet_cidr_blocks)
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
 resource "aws_route_table_association" "private" {
   count          = length(aws_subnet.private)
   subnet_id      = aws_subnet.private[count.index].id
   route_table_id = aws_route_table.private.id
 }
-

@@ -1,0 +1,45 @@
+---
+- name: 🚀 WordPress CI/CD Pipeline
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: "1. ✅ Checkout Code"
+      git:
+        repo: "{{ github_repo }}"
+        dest: "/tmp/wordpress-deploy"
+        version: "{{ branch }}"
+      when: github_repo is defined
+
+    - name: "2. 🔍 Run Tests"
+      shell: |
+        cd /tmp/wordpress-deploy
+        # Add your test commands here
+        echo "Running tests..."
+      when: github_repo is defined
+
+    - name: "3. 🐳 Build & Push Docker Image"
+      include_role:
+        name: wordpress-deploy
+        tasks_from: build-image.yml
+      when: build_image | default(false)
+
+    - name: "4. 🚀 Deploy to ECS"
+      include_role:
+        name: wordpress-deploy
+
+    - name: "5. ✅ Health Check"
+      include_role:
+        name: wordpress-deploy
+        tasks_from: health-check.yml
+
+    - name: "6. 📊 Deployment Status"
+      debug:
+        msg: |
+          🎉 DEPLOYMENT COMPLETE!
+          ======================
+          WordPress successfully deployed to ECS
+          Service: {{ ecs_service }}
+          Cluster: {{ ecs_cluster }}
+          Region: {{ aws_region }}

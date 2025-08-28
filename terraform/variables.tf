@@ -4,12 +4,6 @@ variable "aws_region" {
   default     = "eu-north-1"
 }
 
-variable "key_name" {
-  description = "SSH key pair name"
-  type        = string
-  default     = "your-key-pair-name"
-}
-
 variable "environment" {
   description = "Environment name"
   type        = string
@@ -26,12 +20,6 @@ variable "db_password" {
   description = "Database password"
   type        = string
   sensitive   = true
-}
-
-variable "region" {
-  description = "AWS region"
-  type        = string
-  default     = "eu-north-1"
 }
 
 variable "public_subnet_cidr_blocks" {
@@ -58,7 +46,17 @@ variable "vpc_cidr_block" {
   default     = "10.0.0.0/16"
 }
 
-# Add these to your variables.tf file
+variable "tags" {
+  description = "Common tags for all resources"
+  type        = map(string)
+  default = {
+    Environment = "dev"
+    Project     = "wordpress"
+    ManagedBy   = "terraform"
+  }
+}
+
+# WordPress security keys
 variable "wp_auth_key" {
   description = "WordPress AUTH_KEY"
   type        = string

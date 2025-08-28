@@ -1,13 +1,3 @@
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
-  }
-}
-
 # ECS Cluster
 resource "aws_ecs_cluster" "wordpress_cluster" {
   name = "wordpress-cluster-${var.environment}"
@@ -17,13 +7,12 @@ resource "aws_ecs_cluster" "wordpress_cluster" {
     value = "enabled"
   }
 
-  tags = {
-    Environment = var.environment
-    Name        = "wordpress-ecs-cluster"
-  }
+  tags = merge(var.tags, {
+    Name = "wordpress-ecs-cluster"
+  })
 }
 
-# ECS Task Definition
+# ECS Task Definition - FIXED VERSION
 resource "aws_ecs_task_definition" "wordpress" {
   family                   = "wordpress-task-${var.environment}"
   network_mode             = "awsvpc"
@@ -43,6 +32,16 @@ resource "aws_ecs_task_definition" "wordpress" {
       protocol      = "tcp"
     }]
 
+    
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.wordpress.name
+        awslogs-region        = var.aws_region  
+        awslogs-stream-prefix = "ecs"
+      }
+    }
+
     environment = [
       {
         name  = "WORDPRESS_DB_HOST"
@@ -60,7 +59,6 @@ resource "aws_ecs_task_definition" "wordpress" {
         name  = "WORDPRESS_DB_PASSWORD"
         value = var.db_password
       },
-      # Add WordPress security keys
       {
         name  = "WORDPRESS_AUTH_KEY"
         value = var.wp_auth_key
@@ -98,24 +96,15 @@ resource "aws_ecs_task_definition" "wordpress" {
         value = "define('WP_DEBUG', false);"
       }
     ]
-
-    logConfiguration = {
-      logDriver = "awslogs"
-      options = {
-        awslogs-group         = aws_cloudwatch_log_group.wordpress.name
-        awslogs-region        = var.aws_region
-        awslogs-stream-prefix = "wordpress"
-      }
-    }
   }])
 
-  tags = {
-    Environment = var.environment
-  }
+  tags = var.tags
+  depends_on = [aws_db_instance.wordpress_db]
 }
+
 # ECS Service 
 resource "aws_ecs_service" "wordpress" {
-  name            = "wordpress-service-dev"
+  name            = "wordpress-service-${var.environment}"
   cluster         = aws_ecs_cluster.wordpress_cluster.id
   task_definition = aws_ecs_task_definition.wordpress.arn
   desired_count   = 1
@@ -127,12 +116,16 @@ resource "aws_ecs_service" "wordpress" {
     subnets          = aws_subnet.public[*].id
   }
 
-  # THIS IS THE CRITICAL PART - LOAD BALANCER CONFIG
   load_balancer {
     target_group_arn = aws_lb_target_group.wordpress.arn
     container_name   = "wordpress"
     container_port   = 80
   }
 
-  depends_on = [aws_lb_listener.wordpress]
+  depends_on = [
+    aws_lb_listener.wordpress,
+    aws_lb_target_group.wordpress
+  ]
+
+  tags = var.tags
 }

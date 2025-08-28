@@ -8,10 +8,9 @@ resource "aws_lb" "wordpress" {
 
   enable_deletion_protection = false
 
-  tags = {
-    Environment = var.environment
-    Name        = "wordpress-alb"
-  }
+  tags = merge(var.tags, {
+    Name = "wordpress-alb"
+  })
 }
 
 # ALB Target Group
@@ -31,9 +30,7 @@ resource "aws_lb_target_group" "wordpress" {
     matcher             = "200-299"
   }
 
-  tags = {
-    Environment = var.environment
-  }
+  tags = var.tags
 }
 
 # ALB Listener
@@ -47,7 +44,5 @@ resource "aws_lb_listener" "wordpress" {
     target_group_arn = aws_lb_target_group.wordpress.arn
   }
 
-  tags = {
-    Environment = var.environment
-  }
+  tags = var.tags
 }

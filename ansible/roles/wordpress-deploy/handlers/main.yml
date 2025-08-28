@@ -1,0 +1,7 @@
+---
+- name: restart wordpress service
+  amazon.aws.ecs_service:
+    name: "{{ ecs_service }}"
+    cluster: "{{ ecs_cluster }}"
+    region: "{{ aws_region }}"
+    state: present

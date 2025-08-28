@@ -1,4 +1,24 @@
 ---
-# Database credentials (will be encrypted with ansible-vault later)
-db_user: "wordpress"
-db_password: "{{ vault_db_password }}"
+# AWS Configuration
+aws_region: "eu-north-1"
+environment: "dev"
+
+# ECS Configuration
+ecs_cluster: "wordpress-cluster-dev"
+ecs_service: "wordpress-service-dev"
+ecs_task_family: "wordpress-task-dev"
+
+# Docker Configuration
+docker_image: "wordpress:6.4-apache"
+docker_tag: "latest"
+
+# CloudWatch Configuration
+cloudwatch_log_group: "/ecs/wordpress-dev"
+
+db_host: "database-2.ctmc8eca2j7a.eu-north-1.rds.amazonaws.com"
+db_name: "wordpress"
+db_user: "admin"
+db_password: "B4vCiaEwp60tdgdB"
+security_group_id: "sg-0123456789abcdef0"
+subnet_id_1: "subnet-aaa111"
+subnet_id_2: "subnet-bbb222"
