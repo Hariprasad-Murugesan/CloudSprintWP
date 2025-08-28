@@ -1,0 +1,6 @@
+---
+# Default variables that can be overridden
+wordpress_version: "6.4"
+php_memory_limit: "256M"
+wp_memory_limit: "64M"
+wp_debug: "false"

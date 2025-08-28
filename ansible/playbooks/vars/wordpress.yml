@@ -1,0 +1,22 @@
+---
+# WordPress Container Configuration
+container_name: "wordpress"
+container_port: 80
+docker_image: "wordpress:6.4-apache"
+docker_tag: "latest"
+
+# Database Configuration - UPDATED WITH ACTUAL VALUES
+db_host: "wordpress-db-dev.ctmc8eca2j7a.eu-north-1.rds.amazonaws.com"
+db_name: "wordpress"
+db_user: "adin"
+db_password: "B4vCiaEwp60tdgdB"
+
+# ECS Resource Sizing
+cpu_units: 1024
+memory_mb: 2048
+desired_count: 1
+
+# Health Check
+health_check_interval: 30
+health_check_timeout: 5
+health_check_retries: 3

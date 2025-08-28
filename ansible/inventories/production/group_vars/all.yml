@@ -1,0 +1,16 @@
+# AWS Configuration
+aws_region: "eu-north-1"
+environment: "dev"
+
+# ECS Configuration
+ecs_cluster: "wordpress-cluster-dev"
+ecs_service: "wordpress-service-dev"
+ecs_task_family: "wordpress-task-dev"
+
+# Network Configuration - UPDATED WITH ACTUAL VALUES
+security_group_id: "sg-08597e8fd4de83aab"  # wordpress-ecs-sg-dev
+subnet_id_1: "subnet-05d54c371de5be769"    # eu-north-1a (vpc-08f90f57c80cede4c)
+subnet_id_2: "subnet-072a08ec597bf71ee"    # eu-north-1b (vpc-08f90f57c80cede4c)
+
+# CloudWatch
+cloudwatch_log_group: "/ecs/wordpress-dev"

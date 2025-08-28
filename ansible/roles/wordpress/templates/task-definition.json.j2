@@ -1,0 +1,37 @@
+[
+    {
+        "name": "{{ container_name }}",
+        "image": "{{ docker_image }}",
+        "essential": true,
+        "portMappings": [
+            {
+                "containerPort": {{ container_port }},
+                "hostPort": {{ container_port }},
+                "protocol": "tcp"
+            }
+        ],
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "{{ cloudwatch_log_group }}",
+                "awslogs-region": "{{ aws_region }}",
+                "awslogs-stream-prefix": "ecs"
+            }
+        },
+        "environment": [
+            {"name": "WORDPRESS_DB_HOST", "value": "{{ db_host }}"},
+            {"name": "WORDPRESS_DB_NAME", "value": "{{ db_name }}"},
+            {"name": "WORDPRESS_DB_USER", "value": "{{ db_user }}"},
+            {"name": "WORDPRESS_DB_PASSWORD", "value": "{{ db_password }}"},
+            {"name": "WORDPRESS_CONFIG_EXTRA", "value": "define('WP_MEMORY_LIMIT', '{{ wp_memory_limit }}'); define('WP_DEBUG', {{ wp_debug }});"},
+            {"name": "PHP_MEMORY_LIMIT", "value": "{{ php_memory_limit }}"}
+        ],
+        "healthCheck": {
+            "command": ["CMD-SHELL", "curl -f http://localhost:{{ container_port }}/wp-admin/install.php || exit 1"],
+            "interval": {{ health_check_interval }},
+            "timeout": {{ health_check_timeout }},
+            "retries": {{ health_check_retries }},
+            "startPeriod": 60
+        }
+    }
+]

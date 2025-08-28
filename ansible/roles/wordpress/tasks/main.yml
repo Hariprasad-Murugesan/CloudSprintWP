@@ -1,0 +1,114 @@
+---
+- #name: Verify AWS credentials are configured
+  #fail:
+    #msg: "AWS credentials not found. Please set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables"
+  #when: 
+    #- aws_access_key is not defined
+    #- aws_secret_key is not defined
+
+- name: Get current ECS task definition
+  community.aws.ecs_taskdefinition_info:
+    task_definition: "{{ ecs_task_family }}"
+    region: "{{ aws_region }}"
+  register: ecs_task_def
+  ignore_errors: yes
+  tags: taskdef
+
+- name: Set execution role ARN
+  set_fact:
+    execution_role_arn: "{{ ecs_task_def.execution_role_arn if (ecs_task_def is succeeded and ecs_task_def.execution_role_arn) else 'arn:aws:iam::625041985992:role/ecsTaskExecutionRole' }}"
+  tags: taskdef
+
+- name: Create task definition template
+  template:
+    src: task-definition.json.j2
+    dest: "/tmp/container-definitions-{{ ecs_task_family }}.json"
+  tags: taskdef
+
+- name: Read container definitions from template
+  slurp:
+    src: "/tmp/container-definitions-{{ ecs_task_family }}.json"
+  register: container_definitions_file
+  tags: taskdef
+
+- name: Create new ECS task definition revision
+  community.aws.ecs_taskdefinition:
+    state: present
+    family: "{{ ecs_task_family }}"
+    network_mode: awsvpc
+    cpu: "{{ cpu_units }}"
+    memory: "{{ memory_mb }}"
+    execution_role_arn: "{{ execution_role_arn }}"
+    containers: "{{ container_definitions_file.content | b64decode | from_json }}"
+    region: "{{ aws_region }}"
+  register: new_task_def
+  tags: taskdef
+
+- name: Debug - Show what new_task_def contains
+  debug:
+    var: new_task_def
+  tags: taskdef
+
+- name: Update ECS service to use new task definition
+  community.aws.ecs_service:
+    state: present
+    name: "{{ ecs_service }}"
+    cluster: "{{ ecs_cluster }}"
+    task_definition: "{{ new_task_def.taskdefinition.taskDefinitionArn }}"
+    desired_count: "{{ desired_count }}"
+    launch_type: FARGATE
+    network_configuration:
+      assign_public_ip: true
+      security_groups:
+        - "{{ security_group_id }}"
+      subnets:
+        - "{{ subnet_id_1 }}"
+        - "{{ subnet_id_2 }}"
+    region: "{{ aws_region }}"
+  register: ecs_service_result
+  tags: service
+
+# DEBUG TASKS TO SEE WHAT'S RETURNED
+- name: Debug - Show what ecs_service_result contains
+  debug:
+    var: ecs_service_result
+  tags: service
+
+- name: Get ECS service information
+  community.aws.ecs_service_info:
+    name: "{{ ecs_service }}"
+    cluster: "{{ ecs_cluster }}"
+    region: "{{ aws_region }}"
+  register: service_status
+  tags: service
+
+- name: Debug - Show what service_status contains
+  debug:
+    var: service_status
+  tags: service
+
+# SIMPLE WAIT INSTEAD OF COMPLEX CONDITIONAL
+- name: Wait for service deployment (60 seconds)
+  pause:
+    seconds: 60
+  tags: service
+
+- name: Get final service status
+  community.aws.ecs_service_info:
+    name: "{{ ecs_service }}"
+    cluster: "{{ ecs_cluster }}"
+    region: "{{ aws_region }}"
+  register: final_status
+  tags: service
+
+- name: Display deployment status
+  debug:
+    msg: |
+      🚀 WordPress Deployment Process Completed!
+      ==========================================
+      Service: {{ ecs_service }}
+      Cluster: {{ ecs_cluster }}
+      Desired Tasks: {{ desired_count }}
+      Running Tasks: {{ final_status.services[0].running_count | default('unknown') if final_status is succeeded and final_status.services else 'service-not-found' }}
+      Status: {{ "✅ Success" if final_status is succeeded and final_status.services and (final_status.services[0].running_count | default(0) | int == desired_count | int) else "⚠️ Check ECS console" }}
+  tags: status
