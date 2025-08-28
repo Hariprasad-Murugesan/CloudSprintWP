@@ -16,7 +16,7 @@ resource "aws_db_instance" "wordpress_db" {
   instance_class         = "db.t3.micro"
   allocated_storage      = 20
   db_name                = "wordpress"
-  username               = var.db_username
+  username               = "admin"
   password               = var.db_password
   db_subnet_group_name   = aws_db_subnet_group.wordpress.name
   vpc_security_group_ids = [aws_security_group.db_sg.id]

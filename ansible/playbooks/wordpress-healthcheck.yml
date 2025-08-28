@@ -5,7 +5,7 @@
   gather_facts: no
   
   vars:
-    alb_dns_name: "wordpress-alb-dev-526007647.eu-north-1.elb.amazonaws.com"
+    alb_dns_name: "wordpress-alb-dev-243986438.eu-north-1.elb.amazonaws.com"
   
   tasks:
     - name: Try to get ALB DNS from Terraform
@@ -14,9 +14,14 @@
       changed_when: false
       ignore_errors: yes
 
-    - name: Set ALB DNS name (use known value if Terraform fails)
+    - name: Set ALB DNS name (use Terraform if available, fallback to known value)
       set_fact:
-        actual_alb_dns: "{{ alb_dns_name }}"
+        actual_alb_dns: >-
+          {% if terraform_output.rc == 0 and terraform_output.stdout | length > 0 %}
+          {{ terraform_output.stdout }}
+          {% else %}
+          {{ alb_dns_name }}
+          {% endif %}
 
     - name: Display ALB DNS being used
       debug:
@@ -37,12 +42,12 @@
           🌐 WORDPRESS STATUS CHECK
           ========================
           URL: http://{{ actual_alb_dns }}
-          Status Code: {{ wp_response.status }}
+          Status Code: {{ wp_response.status | default('-1') }}
           {% if wp_response.status == 200 %}✅ SUCCESS - WordPress is working!{% endif %}
           {% if wp_response.status == 302 %}⚠️ REDIRECTING - WordPress setup may be in progress{% endif %}
           {% if wp_response.status == 503 %}🔴 SERVICE UNAVAILABLE - ECS tasks may be starting{% endif %}
           {% if wp_response.status == 404 %}📄 NOT FOUND - WordPress may need initial setup{% endif %}
-          {% if wp_response.status == -1 %}❌ CONNECTION FAILED - Check ALB configuration{% endif %}
+          {% if wp_response.status is not defined or wp_response.status == -1 %}❌ CONNECTION FAILED - Check ALB configuration{% endif %}
 
     - name: Check ECS service status
       shell: |
@@ -57,7 +62,12 @@
 
     - name: Display ECS status
       debug:
-        msg: "📊 ECS Status - Desired: {{ ecs_status.stdout.split()[0] | default('1') }}, Running: {{ ecs_status.stdout.split()[1] | default('0') }}, Pending: {{ ecs_status.stdout.split()[2] | default('0') }}"
+        msg: |
+          📊 ECS Status
+          =============
+          Desired: {{ ecs_status.stdout.split()[0] | default('1') }}
+          Running: {{ ecs_status.stdout.split()[1] | default('0') }}
+          Pending: {{ ecs_status.stdout.split()[2] | default('0') }}
 
     - name: Check RDS database status
       shell: |
@@ -71,13 +81,20 @@
 
     - name: Display RDS status
       debug:
-        msg: "🗄️ RDS Database Status: {{ rds_status.stdout | default('available') }}"
+        msg: |
+          🗄️ RDS Database Status
+          ======================
+          {{ rds_status.stdout | default('unknown') }}
 
     - name: Final summary
       debug:
         msg: |
-          🎯 NEXT STEPS:
+          🎯 NEXT STEPS
+          =============
           {% if wp_response.status == 200 %}   • Visit http://{{ actual_alb_dns }} to use WordPress{% endif %}
+          {% if wp_response.status == 302 %}   • WordPress is redirecting – setup may be in progress{% endif %}
           {% if wp_response.status == 503 %}   • Wait 2-3 minutes for ECS tasks to start{% endif %}
           {% if wp_response.status == 404 %}   • Visit http://{{ actual_alb_dns }} to complete WordPress setup{% endif %}
-          {% if wp_response.status == -1 %}    • Check ALB and security group configuration{% endif %}
+          {% if wp_response.status is not defined or wp_response.status == -1 %}    • Check ALB DNS and security group configuration{% endif %}
+          • ECS Status: Desired={{ ecs_status.stdout.split()[0] | default('1') }}, Running={{ ecs_status.stdout.split()[1] | default('0') }}, Pending={{ ecs_status.stdout.split()[2] | default('0') }}
+          • RDS Status: {{ rds_status.stdout | default('unknown') }}
