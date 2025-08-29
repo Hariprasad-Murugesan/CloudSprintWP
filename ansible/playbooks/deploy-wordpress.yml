@@ -11,6 +11,8 @@
   vars_files:
     - vars/wordpress.yml
 
+  
+
   environment:
     AWS_ACCESS_KEY_ID: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
     AWS_SECRET_ACCESS_KEY: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
@@ -87,15 +89,6 @@
           --desired-count "{{ desired_count }}"
           --region "{{ aws_region }}"
       register: service_update_result
-      tags: deploy
-
-    - name: Wait for service to stabilize
-      command:
-        cmd: >-
-          aws ecs wait services-stable
-          --cluster "{{ ecs_cluster }}"
-          --services "{{ ecs_service }}"
-          --region "{{ aws_region }}"
       tags: deploy
 
     - name: Display deployment status

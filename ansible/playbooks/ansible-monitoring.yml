@@ -6,6 +6,7 @@
 
   vars_files:
     - vars/monitoring.yml
+    - vars/wordpress.yml
 
   tasks:
     - name: Get ECS service status using AWS CLI

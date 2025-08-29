@@ -4,6 +4,9 @@
   connection: local
   gather_facts: true
 
+  vars_files:
+    - vars/wordpress.yml
+
   vars:
     aws_region: "eu-north-1"
     cloudwatch_log_group: "/ansible/deployments"
