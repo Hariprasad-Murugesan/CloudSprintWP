@@ -74,7 +74,8 @@ jobs:
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       run: |
         cd ansible
-        pip3.8 install jmespath
+        python -m pip install --upgrade pip
+        python -m pip install jmespath ansible
         echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
         ansible-playbook playbooks/deploy-wordpress.yml --vault-password-file vault_pass.txt
         rm vault_pass.txt
