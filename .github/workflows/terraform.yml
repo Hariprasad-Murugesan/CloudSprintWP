@@ -75,7 +75,7 @@ jobs:
       run: |
         cd ansible
         echo "$ANSIBLE_VAULT_PASSWORD" > vault_pass.txt
-        ansible-playbook playbooks/wordpress.yml --vault-password-file vault_pass.txt
+        ansible-playbook playbooks/deploy-wordpress.yml --vault-password-file vault_pass.txt
         rm vault_pass.txt
       env:
         ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
