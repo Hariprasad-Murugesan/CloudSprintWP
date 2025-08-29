@@ -1,0 +1,87 @@
+---
+- name: 📊 Configure Ansible CloudWatch Logging
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars:
+    aws_region: "eu-north-1"
+    cloudwatch_log_group: "/ansible/deployments"
+    cloudwatch_log_stream: "wordpress-deployments"
+
+  tasks:
+    - name: Check if CloudWatch log group exists
+      command:
+        cmd: >-
+          aws logs describe-log-groups
+          --log-group-name-prefix "{{ cloudwatch_log_group }}"
+          --region "{{ aws_region }}"
+          --query "length(logGroups[?logGroupName=='{{ cloudwatch_log_group }}'])"
+      register: log_group_check
+      changed_when: false
+      tags: logging
+
+    - name: Create CloudWatch log group if it doesn't exist
+      command:
+        cmd: >-
+          aws logs create-log-group
+          --log-group-name "{{ cloudwatch_log_group }}"
+          --region "{{ aws_region }}"
+      when: log_group_check.stdout == "0"
+      tags: logging
+
+    - name: Set retention policy
+      command:
+        cmd: >-
+          aws logs put-retention-policy
+          --log-group-name "{{ cloudwatch_log_group }}"
+          --retention-in-days 30
+          --region "{{ aws_region }}"
+      tags: logging
+
+    - name: Check if CloudWatch log stream exists
+      command:
+        cmd: >-
+          aws logs describe-log-streams
+          --log-group-name "{{ cloudwatch_log_group }}"
+          --log-stream-name-prefix "{{ cloudwatch_log_stream }}"
+          --region "{{ aws_region }}"
+          --query "length(logStreams[?logStreamName=='{{ cloudwatch_log_stream }}'])"
+      register: log_stream_check
+      changed_when: false
+      tags: logging
+
+    - name: Create CloudWatch log stream if it doesn't exist
+      command:
+        cmd: >-
+          aws logs create-log-stream
+          --log-group-name "{{ cloudwatch_log_group }}"
+          --log-stream-name "{{ cloudwatch_log_stream }}"
+          --region "{{ aws_region }}"
+      when: log_stream_check.stdout == "0"
+      tags: logging
+
+    - name: Create log event with timestamp
+      set_fact:
+        log_timestamp: "{{ ansible_date_time.epoch }}000"
+      tags: logging
+
+    - name: Send deployment start message to CloudWatch
+      command:
+        cmd: >-
+          aws logs put-log-events
+          --log-group-name "{{ cloudwatch_log_group }}"
+          --log-stream-name "{{ cloudwatch_log_stream }}"
+          --log-events '[{"timestamp": {{ log_timestamp }}, "message": "🚀 Starting WordPress deployment to ECS - {{ ansible_date_time.iso8601 }}"}]'
+          --region "{{ aws_region }}"
+      tags: logging
+
+    - name: Send deployment details to CloudWatch
+      command:
+        cmd: >-
+          aws logs put-log-events
+          --log-group-name "{{ cloudwatch_log_group }}"
+          --log-stream-name "{{ cloudwatch_log_stream }}"
+          --log-events '[{"timestamp": {{ log_timestamp }}, "message": "Deployment Details: Cluster={{ ecs_cluster }}, Service={{ ecs_service }}, Task Family={{ ecs_task_family }}, Region={{ aws_region }}"}]'
+          --region "{{ aws_region }}"
+      tags: logging

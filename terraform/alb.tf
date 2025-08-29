@@ -22,15 +22,18 @@ resource "aws_lb_target_group" "wordpress" {
   target_type = "ip"
 
   health_check {
-    path                = "/"
+    enabled             = true
     interval            = 30
+    path                = "/wp-admin/install.php"  # WordPress health check
+    port                = "traffic-port"
+    protocol            = "HTTP"
     timeout             = 5
     healthy_threshold   = 2
-    unhealthy_threshold = 2
+    unhealthy_threshold = 3
     matcher             = "200-299"
   }
 
-  tags = var.tags
+  depends_on = [aws_lb.wordpress]
 }
 
 # ALB Listener

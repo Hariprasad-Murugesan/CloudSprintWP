@@ -19,3 +19,23 @@ output "ecs_service_status" {
     task_definition = aws_ecs_service.wordpress.task_definition
   }
 }
+
+# Add these outputs to monitor your setup
+output "sns_topic_arn" {
+  description = "ARN of the SNS topic for notifications"
+  value       = aws_sns_topic.wordpress_alerts.arn
+}
+
+output "auto_scaling_target" {
+  description = "Auto scaling target resource ID"
+  value       = aws_appautoscaling_target.wordpress.resource_id
+}
+
+output "cloudwatch_alarms" {
+  description = "List of CloudWatch alarm names"
+  value = [
+    aws_cloudwatch_metric_alarm.high_cpu.alarm_name,
+    aws_cloudwatch_metric_alarm.high_memory.alarm_name,
+    aws_cloudwatch_metric_alarm.service_unhealthy.alarm_name
+  ]
+}

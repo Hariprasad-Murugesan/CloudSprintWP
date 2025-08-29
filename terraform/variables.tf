@@ -104,3 +104,39 @@ variable "wp_nonce_salt" {
   type        = string
   sensitive   = true
 }
+
+variable "min_capacity" {
+  description = "Minimum number of tasks for auto scaling"
+  type        = number
+  default     = 1
+}
+
+variable "max_capacity" {
+  description = "Maximum number of tasks for auto scaling"
+  type        = number
+  default     = 4
+}
+
+variable "desired_count" {
+  description = "Desired number of tasks"
+  type        = number
+  default     = 2
+}
+
+variable "sns_email" {
+  description = "Email address for SNS notifications"
+  type        = string
+  default     = "your-email@example.com"
+}
+
+variable "cpu_scale_threshold" {
+  description = "CPU utilization threshold for scaling"
+  type        = number
+  default     = 70
+}
+
+variable "memory_scale_threshold" {
+  description = "Memory utilization threshold for scaling"
+  type        = number
+  default     = 80
+}

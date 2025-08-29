@@ -1,0 +1,83 @@
+---
+- name: 📈 Monitor ECS Deployment and Log to CloudWatch
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars_files:
+    - vars/monitoring.yml
+
+  tasks:
+    - name: Get ECS service status using AWS CLI
+      command:
+        cmd: >-
+          aws ecs describe-services
+          --cluster "{{ ecs_cluster }}"
+          --services "{{ ecs_service }}"
+          --region "{{ aws_region }}"
+          --query "services[0]"
+      register: service_result
+      tags: monitoring
+
+    - name: Extract service status information
+      set_fact:
+        running_count: "{{ service_result.stdout | from_json | json_query('runningCount') | default(0) }}"
+        desired_count: "{{ service_result.stdout | from_json | json_query('desiredCount') | default(0) }}"
+        service_status: "{{ service_result.stdout | from_json | json_query('status') | default('UNKNOWN') }}"
+      tags: monitoring
+
+    - name: Get ALB target group health using AWS CLI
+      command:
+        cmd: >-
+          aws elbv2 describe-target-health
+          --target-group-arn "{{ alb_target_group_arn }}"
+          --region "{{ aws_region }}"
+          --query "TargetHealthDescriptions"
+      register: alb_health_result
+      tags: monitoring
+
+    - name: Set ALB health counts
+      set_fact:
+        alb_healthy: "{{ (alb_health_result.stdout | from_json | json_query('[?TargetHealth.State==`healthy`]') | length) if alb_health_result is succeeded else 0 }}"
+        alb_unhealthy: "{{ (alb_health_result.stdout | from_json | json_query('[?TargetHealth.State==`unhealthy`]') | length) if alb_health_result is succeeded else 0 }}"
+      tags: monitoring
+
+    - name: Create monitoring timestamp
+      set_fact:
+        monitor_timestamp: "{{ ansible_date_time.epoch }}000"
+      tags: monitoring
+
+    - name: Log service status to CloudWatch
+      command:
+        cmd: >-
+          aws logs put-log-events
+          --log-group-name "{{ cloudwatch_log_group }}"
+          --log-stream-name "{{ cloudwatch_log_stream }}"
+          --log-events '[{"timestamp": {{ monitor_timestamp }}, "message": "ECS Service Status: Running={{ running_count }}, Desired={{ desired_count }}, Status={{ service_status }}, Cluster={{ ecs_cluster }}"}]'
+          --region "{{ aws_region }}"
+      tags: monitoring
+
+    - name: Log ALB health status to CloudWatch
+      command:
+        cmd: >-
+          aws logs put-log-events
+          --log-group-name "{{ cloudwatch_log_group }}"
+          --log-stream-name "{{ cloudwatch_log_stream }}"
+          --log-events '[{"timestamp": {{ monitor_timestamp }}, "message": "ALB Health: {{ alb_healthy }} healthy, {{ alb_unhealthy }} unhealthy, TargetGroup={{ target_group_name }}, HealthCheck={{ health_check_path }}"}]'
+          --region "{{ aws_region }}"
+      tags: monitoring
+
+    - name: Display monitoring summary
+      debug:
+        msg: |
+          📊 Monitoring Summary:
+          =====================
+          ECS Service: {{ running_count }}/{{ desired_count }} running (Status: {{ service_status }})
+          ALB Targets: {{ alb_healthy }} healthy, {{ alb_unhealthy }} unhealthy
+          Cluster: {{ ecs_cluster }}
+          Service: {{ ecs_service }}
+          Target Group: {{ target_group_name }}
+          Health Check: {{ health_check_path }}
+          
+          ✅ Monitoring completed and logged to CloudWatch
+      tags: monitoring

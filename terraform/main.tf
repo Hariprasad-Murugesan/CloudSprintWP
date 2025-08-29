@@ -12,7 +12,7 @@ resource "aws_ecs_cluster" "wordpress_cluster" {
   })
 }
 
-# ECS Task Definition - FIXED VERSION
+# ECS Task Definition
 resource "aws_ecs_task_definition" "wordpress" {
   family                   = "wordpress-task-${var.environment}"
   network_mode             = "awsvpc"
@@ -32,7 +32,6 @@ resource "aws_ecs_task_definition" "wordpress" {
       protocol      = "tcp"
     }]
 
-    
     logConfiguration = {
       logDriver = "awslogs"
       options = {
@@ -102,13 +101,14 @@ resource "aws_ecs_task_definition" "wordpress" {
   depends_on = [aws_db_instance.wordpress_db]
 }
 
-# ECS Service 
+# ECS Service with Auto Scaling
 resource "aws_ecs_service" "wordpress" {
   name            = "wordpress-service-${var.environment}"
   cluster         = aws_ecs_cluster.wordpress_cluster.id
   task_definition = aws_ecs_task_definition.wordpress.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  desired_count   = var.desired_count
+  
+
 
   network_configuration {
     assign_public_ip = true
@@ -122,10 +122,67 @@ resource "aws_ecs_service" "wordpress" {
     container_port   = 80
   }
 
+  # KEEP THIS - Auto Scaling Configuration
+  capacity_provider_strategy {
+    capacity_provider = "FARGATE"
+    weight            = 1
+    base              = 1
+  }
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   depends_on = [
     aws_lb_listener.wordpress,
     aws_lb_target_group.wordpress
   ]
 
   tags = var.tags
+}
+
+# Application Auto Scaling Target
+resource "aws_appautoscaling_target" "wordpress" {
+  max_capacity       = var.max_capacity
+  min_capacity       = var.min_capacity
+  resource_id        = "service/${aws_ecs_cluster.wordpress_cluster.name}/${aws_ecs_service.wordpress.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  service_namespace  = "ecs"
+}
+
+# CPU-based Scale Out Policy
+resource "aws_appautoscaling_policy" "scale_out_cpu" {
+  name               = "wordpress-scale-out-cpu"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.wordpress.resource_id
+  scalable_dimension = aws_appautoscaling_target.wordpress.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.wordpress.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+    }
+    target_value       = var.cpu_scale_threshold
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 300
+  }
+}
+
+# Memory-based Scale Out Policy
+resource "aws_appautoscaling_policy" "scale_out_memory" {
+  name               = "wordpress-scale-out-memory"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.wordpress.resource_id
+  scalable_dimension = aws_appautoscaling_target.wordpress.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.wordpress.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ECSServiceAverageMemoryUtilization"
+    }
+    target_value       = var.memory_scale_threshold
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 300
+  }
 }

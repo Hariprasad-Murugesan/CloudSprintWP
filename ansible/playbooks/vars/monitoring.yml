@@ -1,0 +1,47 @@
+---
+# Monitoring Configuration
+monitoring_interval: 30
+monitoring_retries: 12
+monitoring_delay: 10
+
+# ALB Target Group ARN (from your AWS output)
+alb_target_group_arn: "arn:aws:elasticloadbalancing:eu-north-1:625041985992:targetgroup/wordpress-tg-dev/54ebe66c580da908"
+
+# ECS Configuration (update these if different)
+ecs_cluster: "wordpress-cluster-dev"
+ecs_service: "wordpress-service-dev"
+ecs_task_family: "wordpress-task-dev"
+
+# ALB Configuration (from your output)
+alb_name: "wordpress-alb-dev"
+alb_arn: "arn:aws:elasticloadbalancing:eu-north-1:625041985992:loadbalancer/app/wordpress-alb-dev/7958ef21f7c9f3e8"
+
+# Target Group Configuration (from your output)
+target_group_name: "wordpress-tg-dev"
+target_group_port: 80
+target_group_protocol: "HTTP"
+health_check_path: "/wp-admin/install.php"
+health_check_matcher: "200-299"
+
+# VPC Configuration (from your output)
+vpc_id: "vpc-08f90f57c80cede4c"
+
+# Region
+aws_region: "eu-north-1"
+
+# CloudWatch Configuration
+cloudwatch_log_group: "/ansible/deployments"
+cloudwatch_log_stream: "wordpress-deployments"
+
+# Notification Settings
+notification_email: "hariprasadmurugesan06@gmail.com"  
+alert_threshold_cpu: 70
+alert_threshold_memory: 80
+alert_threshold_unhealthy_hosts: 1
+
+# Auto Scaling Configuration
+min_capacity: 1
+max_capacity: 4
+desired_count: 2
+scale_out_cooldown: 300
+scale_in_cooldown: 300
